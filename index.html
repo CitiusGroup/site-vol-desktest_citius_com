@@ -4,13 +4,78 @@
 <meta http-equiv="Content-Language" content="fi">
 <meta http-equiv="Content-Type" content="text/html; charset=windows-1252">
 <title>site-vol-desktest.citius.com</title>
+<style>
+	.showloggedin, .showloggedout {
+		display: none;
+	}
+</style>
 <script type="text/javascript">
+	// initial state
+	var state = {
+		isloggedin: true
+	};
+	
+	function getUrlParamValue(paramName) {
+		var url = window.location.search.substring(1);
+		var qArray = url.split('&');
+		for (var i = 0; i < qArray.length; i++) {
+			var pArr = qArray[i].split('=');
+			if (pArr[0] == paramName) 
+				return pArr[1];
+		}
+	}
+	function bindEvent(element, eventName, eventHandler) {
+		if (element.addEventListener) {
+			element.addEventListener(eventName, eventHandler, false);
+		} else if (element.attachEvent) {
+			element.attachEvent('on' + eventName, eventHandler);
+		}
+	}
+	
+	// post to parent
 	function post(value) {
 		if (value) {
 			window.parent.postMessage(value, "*");
 		}
 		return false;
 	}
+	
+	function onstatechange(params) {
+		let key;
+		for (key in params) {
+			if ( params.hasOwnProperty(key) && state.hasOwnProperty(key) ) {
+				state[key] = params[key];
+			}
+		}
+		
+		this.render();
+	}
+	
+	// render changes
+	function render() {
+		
+		[].forEach.call(document.querySelectorAll('.showloggedin', '.showloggedout'), function (el) {
+			el.style.display = 'none';
+		});
+		
+		const cls = state.isloggedin ? '.showloggedin' : '.showloggedout';
+		[].forEach.call(document.querySelectorAll(cls), function (el) {
+			el.style.display = 'block';
+		});
+	}
+	
+	window.onload = function() {
+		// update initial state ...
+		
+		state.isloggedin = getUrlParamValue('isloggedin');
+		
+		this.render();
+		
+		bindEvent(window, 'message', function (e) {
+			// listen changes ...
+			this.onstatechange(e.data.params);
+		});
+	};
 </script>
 </head>
 
@@ -23,8 +88,14 @@
 		</td>
 	</tr>
 	<tr>
-		<td>
-			<button type="button" role="button" onclick="post('/signin');">Kirjaudu</button>
+		<td style="text-align: center;">
+			<div class="showloggedin">
+				<button type="button" role="button" onclick="post('/profile');">Kutsu profiilin avaus</button>
+				<button type="button" role="button" onclick="post('/signout');">Kutsu kirjaudu ulos</button>
+			</div>
+			<div class="showloggedout">
+				<button type="button" role="button" onclick="post('/signin');">Kirjaudu</button>
+			</div>
 		</td>
 	</tr>
 </table>
